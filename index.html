@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>{{ bot_name }} · Dashboard</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0a1020;--panel:#121d31;--line:#263750;--muted:#9aabc2;--text:#eef5ff;--accent:#67c5a4;--warn:#e7b35c;--good:#49d69a}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 15% 0%,#183d4c 0,transparent 34%),var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}
+    .wrap{max-width:1100px;margin:auto;padding:32px 18px 56px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:25px}
+    .brand{display:flex;gap:14px;align-items:center}.logo{width:54px;height:54px;border-radius:17px;display:grid;place-items:center;background:linear-gradient(135deg,#1d967e,#4d7dd6);font-size:27px;box-shadow:0 12px 34px #20a98733}
+    h1{font-size:clamp(22px,4vw,31px);margin:0 0 4px}.sub,.muted{color:var(--muted)}.pill{border:1px solid var(--line);padding:9px 13px;border-radius:999px;background:#0e192b;color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:19px;padding:19px;background:linear-gradient(155deg,#14233a,#101a2b);box-shadow:0 12px 35px #0003;min-width:0}
+    .label{color:var(--muted);font-size:13px;margin-bottom:12px}.metric{font-size:clamp(24px,4vw,32px);font-weight:760;letter-spacing:-.04em}.status{display:flex;align-items:center;gap:9px;font-weight:650}.dot{width:10px;height:10px;border-radius:50%;background:#718198}.dot.good{background:var(--good);box-shadow:0 0 0 5px #49d69a22}.dot.warn{background:var(--warn);box-shadow:0 0 0 5px #e7b35c22}
+    .wide{grid-column:span 2}.details{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:17px}.detail{border-top:1px solid var(--line);padding-top:12px;min-width:0}.detail span{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}.detail strong{font-size:14px;overflow-wrap:anywhere}.notice{margin-top:16px;padding:15px 17px;border:1px solid #775c2c;border-radius:15px;background:#392d172e;color:#e6d6b6;line-height:1.55;font-size:13px}.foot{text-align:center;color:var(--muted);font-size:12px;margin-top:23px}
+    @media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wide{grid-column:span 2}}@media(max-width:420px){.grid{gap:10px}.card{padding:15px}.details{grid-template-columns:1fr}}
+  </style>
+</head>
+<body><main class="wrap">
+  <header class="top"><div class="brand"><div class="logo">🐝</div><div><h1>{{ bot_name }}</h1><div class="sub">Live Telegram service dashboard · FileBee link manager</div></div></div><div class="pill" id="server-time">Server time: loading…</div></header>
+  <section class="grid">
+    <article class="card"><div class="label">Telegram bot</div><div class="status"><span class="dot" id="tg-dot"></span><span id="tg-status">Checking…</span></div></article>
+    <article class="card"><div class="label">FileBee integration</div><div class="status"><span class="dot warn" id="storage-dot"></span><span id="storage-status">Checking…</span></div></article>
+    <article class="card"><div class="label">Service uptime</div><div class="metric" id="uptime">—</div></article>
+    <article class="card"><div class="label">Registered users</div><div class="metric" id="users">—</div></article>
+    <article class="card"><div class="label">Saved links/files</div><div class="metric" id="files">—</div></article>
+    <article class="card"><div class="label">Known file size</div><div class="metric" id="bytes">—</div></article>
+    <article class="card wide"><div class="label">Bot information</div><div class="details"><div class="detail"><span>Bot username</span><strong id="username">—</strong></div><div class="detail"><span>Banned users</span><strong id="banned">—</strong></div></div></article>
+    <article class="card wide"><div class="label">Live activity</div><div class="details"><div class="detail"><span>Last Telegram update</span><strong id="last-update">Waiting for updates</strong></div><div class="detail"><span>Refresh interval</span><strong>5 seconds</strong></div></div></article>
+  </section>
+  <div class="notice"><b>FileBee API status:</b> The public FileBee.live page is JavaScript-based; a public server upload API and 4GB provider limit could not be verified. By default this project saves share links sent by users. Automatic streaming upload is disabled until an official FileBee endpoint is configured.</div>
+  <div class="foot">All times are UTC · Persistent SQLite dashboard · Render health endpoint: /health</div>
+</main>
+<script>
+const fmt=n=>{let x=Number(n||0);for(const u of ['B','KB','MB','GB','TB']){if(x<1024||u==='TB')return(u==='B'?Math.round(x):x.toFixed(2))+' '+u;x/=1024}};
+async function refresh(){try{const r=await fetch('/api/status',{cache:'no-store'});if(!r.ok)throw Error(r.status);const d=await r.json();
+ document.getElementById('tg-status').textContent=d.connected?'Online':'Offline';document.getElementById('tg-dot').classList.toggle('good',!!d.connected);
+ const configured=d.storage_mode==='api';document.getElementById('storage-status').textContent=configured?'API adapter configured':'Manual link mode';document.getElementById('storage-dot').classList.toggle('good',configured);document.getElementById('storage-dot').classList.toggle('warn',!configured);
+ document.getElementById('uptime').textContent=d.uptime_text;document.getElementById('users').textContent=d.users;document.getElementById('files').textContent=d.files;document.getElementById('bytes').textContent=fmt(d.bytes);document.getElementById('username').textContent=d.bot_username?'@'+d.bot_username:'Not available';document.getElementById('banned').textContent=d.banned;document.getElementById('last-update').textContent=d.last_update_utc?new Date(d.last_update_utc).toLocaleString():'Waiting for updates';document.getElementById('server-time').textContent='Server time: '+new Date(d.server_time_utc).toLocaleString();
+ }catch(e){document.getElementById('tg-status').textContent='Dashboard API unavailable';document.getElementById('tg-dot').classList.remove('good')}}refresh();setInterval(refresh,5000);
+</script></body></html>
