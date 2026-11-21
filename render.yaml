@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: filebee-telegram-bot
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_IDS
+        sync: false
+      - key: FILEBEE_WEBSITE
+        value: https://filebee.live
+      - key: FILEBEE_UPLOAD_URL
+        value: ""
+      - key: MAX_FILE_GB
+        value: "4"
+      - key: LINK_RECORD_TTL_DAYS
+        value: "0"
+      - key: PORT
+        value: "10000"
+      - key: DATABASE_PATH
+        value: /var/data/bot.db
+      - key: DASHBOARD_USER
+        value: admin
+      - key: DASHBOARD_PASSWORD
+        sync: false
+      - key: BOT_NAME
+        value: FileBee Telegram Bot
+    disk:
+      name: filebee-telegram-data
+      mountPath: /var/data
+      sizeGB: 1
